@@ -1,14 +1,329 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Copy, Check } from "lucide-react";
 import { useApi } from "@/context/ApiContext";
-import { getMethodColor, getMethodTextColor } from "@/utils/methodColor";
+import {
+  getMethodBackgroundColor,
+  getMethodTextColor,
+} from "@/utils/methodColor";
 import { JsonViewer } from "./JsonViewer";
 import type { ApiEndpoint } from "@/utils/types";
 
+// Component RequestBodySection với tabs
+function RequestBodySection({
+  requestBody,
+  openApiSpec,
+}: {
+  requestBody: any;
+  openApiSpec: any;
+}) {
+  const [activeTab, setActiveTab] = useState<"example" | "schema">("example");
+  const [selectedContentType, setSelectedContentType] = useState<string>("");
+
+  // Lấy danh sách content types
+  const contentTypes = useMemo(() => {
+    return requestBody?.content ? Object.keys(requestBody.content) : [];
+  }, [requestBody?.content]);
+
+  // Khởi tạo selectedContentType khi có content types
+  useEffect(() => {
+    if (contentTypes.length > 0 && !selectedContentType) {
+      // Ưu tiên application/json, sau đó là application/json-patch+json
+      const preferred =
+        contentTypes.find((ct) => ct === "application/json") ||
+        contentTypes.find((ct) => ct.includes("json")) ||
+        contentTypes[0];
+      setSelectedContentType(preferred);
+    }
+  }, [contentTypes, selectedContentType]);
+
+  if (!requestBody?.content || contentTypes.length === 0) {
+    return null;
+  }
+
+  // Nếu chưa có selectedContentType, sử dụng content type đầu tiên
+  const currentContentType =
+    selectedContentType ||
+    contentTypes.find((ct) => ct.includes("json")) ||
+    contentTypes[0];
+
+  const currentContent = requestBody.content[currentContentType];
+
+  // Lấy example value
+  const getExampleValue = () => {
+    if (currentContent?.example) {
+      return currentContent.example;
+    }
+    // Nếu không có example, tạo example từ schema
+    if (currentContent?.schema) {
+      return generateExampleFromSchema(currentContent.schema, openApiSpec);
+    }
+    return null;
+  };
+
+  // Lấy schema
+  const getSchema = () => {
+    if (currentContent?.schema) {
+      return currentContent.schema;
+    }
+    return null;
+  };
+
+  const exampleValue = getExampleValue();
+  const schema = getSchema();
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xl font-semibold">Request body</h2>
+        <select
+          value={selectedContentType || currentContentType}
+          onChange={(e) => setSelectedContentType(e.target.value)}
+          className="px-3 py-1.5 border border-border rounded bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          {contentTypes.map((ct) => (
+            <option key={ct} value={ct}>
+              {ct}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-border mb-4">
+        <button
+          onClick={() => setActiveTab("example")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "example"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Example Value
+        </button>
+        <button
+          onClick={() => setActiveTab("schema")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "schema"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Schema
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="border border-border rounded-lg bg-card">
+        {activeTab === "example" ? (
+          <div>
+            {exampleValue ? (
+              <JsonViewer data={exampleValue} collapsed={false} />
+            ) : (
+              <div className="p-4 text-muted-foreground text-sm">
+                Không có example value
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            {schema ? (
+              <JsonViewer data={schema} collapsed={false} />
+            ) : (
+              <div className="p-4 text-muted-foreground text-sm">
+                Không có schema
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Helper function để resolve $ref từ OpenAPI spec
+function resolveRef(ref: string, openApiSpec: any): any {
+  if (!ref || !openApiSpec) return null;
+
+  // $ref format: #/components/schemas/AttributeDto
+  const parts = ref.split("/").filter((p) => p && p !== "#");
+  let current: any = openApiSpec;
+
+  for (const part of parts) {
+    if (current && typeof current === "object" && part in current) {
+      current = current[part];
+    } else {
+      return null;
+    }
+  }
+
+  return current;
+}
+
+// Helper function để resolve schema (có thể có $ref)
+function resolveSchema(
+  schema: any,
+  openApiSpec: any,
+  visited: Set<string> = new Set()
+): any {
+  if (!schema) return null;
+
+  // Nếu có $ref, resolve nó
+  if (schema.$ref) {
+    // Tránh circular reference
+    if (visited.has(schema.$ref)) {
+      return null;
+    }
+    visited.add(schema.$ref);
+
+    const resolved = resolveRef(schema.$ref, openApiSpec);
+    if (resolved) {
+      // Merge với schema hiện tại (để giữ required, nullable, etc.)
+      const merged = { ...resolved };
+      // Resolve nested $ref nếu có
+      if (merged.properties) {
+        const resolvedProps: any = {};
+        Object.entries(merged.properties).forEach(
+          ([key, prop]: [string, any]) => {
+            if (prop && typeof prop === "object") {
+              resolvedProps[key] = resolveSchema(prop, openApiSpec, visited);
+            } else {
+              resolvedProps[key] = prop;
+            }
+          }
+        );
+        merged.properties = resolvedProps;
+      }
+      if (merged.items) {
+        merged.items = resolveSchema(merged.items, openApiSpec, visited);
+      }
+      return merged;
+    }
+  }
+
+  // Resolve nested schemas
+  if (schema.properties) {
+    const resolvedProps: any = {};
+    Object.entries(schema.properties).forEach(([key, prop]: [string, any]) => {
+      if (prop && typeof prop === "object") {
+        resolvedProps[key] = resolveSchema(prop, openApiSpec, visited);
+      } else {
+        resolvedProps[key] = prop;
+      }
+    });
+    return { ...schema, properties: resolvedProps };
+  }
+
+  if (schema.items) {
+    return {
+      ...schema,
+      items: resolveSchema(schema.items, openApiSpec, visited),
+    };
+  }
+
+  return schema;
+}
+
+// Helper function để generate example từ schema
+function generateExampleFromSchema(schema: any, openApiSpec: any): any {
+  if (!schema) return null;
+
+  // Resolve $ref trước
+  const resolvedSchema = resolveSchema(schema, openApiSpec);
+  if (!resolvedSchema) return null;
+
+  // Nếu có example trong schema
+  if (resolvedSchema.example !== undefined) {
+    return resolvedSchema.example;
+  }
+
+  // Xử lý theo type
+  if (resolvedSchema.type === "object" && resolvedSchema.properties) {
+    const example: any = {};
+    Object.entries(resolvedSchema.properties).forEach(
+      ([key, prop]: [string, any]) => {
+        // Hiển thị tất cả fields (giống Swagger UI)
+        const value = generateExampleFromSchema(prop, openApiSpec);
+        if (value !== null && value !== undefined) {
+          example[key] = value;
+        }
+      }
+    );
+    return example;
+  }
+
+  if (resolvedSchema.type === "array" && resolvedSchema.items) {
+    return [generateExampleFromSchema(resolvedSchema.items, openApiSpec)];
+  }
+
+  // Xử lý allOf, oneOf, anyOf
+  if (resolvedSchema.allOf) {
+    const merged: any = {};
+    resolvedSchema.allOf.forEach((subSchema: any) => {
+      const resolved = resolveSchema(subSchema, openApiSpec);
+      const subExample = generateExampleFromSchema(resolved, openApiSpec);
+      if (subExample && typeof subExample === "object") {
+        Object.assign(merged, subExample);
+      }
+    });
+    return Object.keys(merged).length > 0 ? merged : null;
+  }
+
+  if (resolvedSchema.oneOf && resolvedSchema.oneOf.length > 0) {
+    return generateExampleFromSchema(resolvedSchema.oneOf[0], openApiSpec);
+  }
+
+  if (resolvedSchema.anyOf && resolvedSchema.anyOf.length > 0) {
+    return generateExampleFromSchema(resolvedSchema.anyOf[0], openApiSpec);
+  }
+
+  // Xử lý enum
+  if (resolvedSchema.enum && resolvedSchema.enum.length > 0) {
+    return resolvedSchema.enum[0];
+  }
+
+  // Default values theo type
+  switch (resolvedSchema.type) {
+    case "string":
+      if (resolvedSchema.format === "uuid") {
+        return "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+      }
+      if (resolvedSchema.format === "date-time") {
+        return "2024-01-01T00:00:00Z";
+      }
+      if (resolvedSchema.format === "date") {
+        return "2024-01-01";
+      }
+      return "string";
+    case "integer":
+    case "number":
+      if (resolvedSchema.format === "int32") {
+        return 0;
+      }
+      if (resolvedSchema.format === "int64") {
+        return 0;
+      }
+      if (
+        resolvedSchema.format === "double" ||
+        resolvedSchema.format === "float"
+      ) {
+        return 0.0;
+      }
+      return 0;
+    case "boolean":
+      return false;
+    case "object":
+      return {};
+    case "array":
+      return [];
+    default:
+      return null;
+  }
+}
+
 export function EndpointDetail() {
-  const { selectedEndpoint, apiInfo } = useApi();
+  const { selectedEndpoint, apiInfo, openApiSpec } = useApi();
   const [copied, setCopied] = useState(false);
 
   if (!selectedEndpoint) {
@@ -89,9 +404,14 @@ export function EndpointDetail() {
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <span
-            className={`px-3 py-1 rounded text-sm font-semibold ${getMethodColor(
+            style={{
+              backgroundColor: getMethodBackgroundColor(
+                selectedEndpoint.method
+              ),
+            }}
+            className={`px-3 py-1 rounded text-sm font-semibold ${getMethodTextColor(
               selectedEndpoint.method
-            )} ${getMethodTextColor(selectedEndpoint.method)}`}
+            )}`}
           >
             {selectedEndpoint.method}
           </span>
@@ -186,13 +506,10 @@ export function EndpointDetail() {
 
       {/* Request Body */}
       {selectedEndpoint.requestBody && (
-        <div>
-          <h2 className="text-xl font-semibold mb-3">Request Body</h2>
-          <JsonViewer
-            data={getRequestBodyExample(selectedEndpoint.requestBody)}
-            collapsed={false}
-          />
-        </div>
+        <RequestBodySection
+          requestBody={selectedEndpoint.requestBody}
+          openApiSpec={openApiSpec}
+        />
       )}
 
       {/* Responses */}
@@ -221,7 +538,7 @@ export function EndpointDetail() {
                 {response.content && (
                   <JsonViewer
                     data={Object.values(response.content)[0]}
-                    collapsed={true}
+                    collapsed={false}
                   />
                 )}
               </div>

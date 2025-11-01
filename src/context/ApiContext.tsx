@@ -23,6 +23,7 @@ interface ApiContextType {
     description?: string;
     version: string;
   } | null;
+  openApiSpec: OpenAPISpec | null; // Lưu toàn bộ spec để resolve $ref
 }
 
 const ApiContext = createContext<ApiContextType | undefined>(undefined);
@@ -42,6 +43,7 @@ export function ApiProvider({ children }: { children: ReactNode }) {
     description?: string;
     version: string;
   } | null>(null);
+  const [openApiSpec, setOpenApiSpec] = useState<OpenAPISpec | null>(null);
 
   useEffect(() => {
     async function loadApi() {
@@ -49,12 +51,16 @@ export function ApiProvider({ children }: { children: ReactNode }) {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch("/demo-api.json");
+        // Sử dụng API route proxy để tránh lỗi CORS
+        const response = await fetch("/api/swagger");
         if (!response.ok) {
-          throw new Error("Không thể tải file API JSON");
+          throw new Error("Không thể tải API từ server");
         }
 
         const spec: OpenAPISpec = await response.json();
+
+        // Lưu toàn bộ spec để resolve $ref
+        setOpenApiSpec(spec);
 
         // Lưu API info
         setApiInfo({
@@ -71,8 +77,8 @@ export function ApiProvider({ children }: { children: ReactNode }) {
         setGroupedEndpoints(grouped);
 
         // Auto-select endpoint đầu tiên nếu có
-        if (parsedEndpoints.length > 0 && !selectedEndpoint) {
-          setSelectedEndpoint(parsedEndpoints[0]);
+        if (parsedEndpoints.length > 0) {
+          setSelectedEndpoint((prev) => prev || parsedEndpoints[0]);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
@@ -95,6 +101,7 @@ export function ApiProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         apiInfo,
+        openApiSpec,
       }}
     >
       {children}

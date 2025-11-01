@@ -1,13 +1,13 @@
 {
     "openapi": "3.0.4",
     "info": {
-      "title": "SOFIPOS APP API",
+      "title": "SOFIPOS API",
       "description": "Danh sách API - Tài liệu lưu hành nội bộ",
       "contact": {
         "name": "SOFIPOS DEV",
         "email": "visnamdev@gmail.com"
       },
-      "version": "v1.0.0"
+      "version": "1.0.0"
     },
     "paths": {
       "/api/Attributes": {

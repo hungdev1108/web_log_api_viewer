@@ -29,7 +29,7 @@ export default function Home() {
         <aside
           className={`${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } md:translate-x-0 fixed md:relative w-80 flex-shrink-0 h-full bg-card border-r border-border z-40 transition-transform duration-300`}
+          } md:translate-x-0 fixed md:relative w-[650px] flex-shrink-0 h-full bg-card border-r border-border z-40 transition-transform duration-300`}
         >
           <Sidebar onEndpointSelect={() => setSidebarOpen(false)} />
         </aside>

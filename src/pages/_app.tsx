@@ -1,14 +1,23 @@
 import type { AppProps } from "next/app";
+import Head from "next/head";
 import { ApiProvider } from "@/context/ApiContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import "@/styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <ThemeProvider>
-      <ApiProvider>
-        <Component {...pageProps} />
-      </ApiProvider>
-    </ThemeProvider>
+    <>
+      <Head>
+        <title>SOFIPOS API</title>
+      </Head>
+      <ThemeProvider>
+        <FavoritesProvider>
+          <ApiProvider>
+            <Component {...pageProps} />
+          </ApiProvider>
+        </FavoritesProvider>
+      </ThemeProvider>
+    </>
   );
 }

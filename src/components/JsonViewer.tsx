@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Check } from "lucide-react";
 
 // Wrapper component cho ReactJsonView để tránh SSR
 const ReactJsonViewClient = dynamic(
@@ -37,6 +37,7 @@ export function JsonViewer({
   const [isExpanded, setIsExpanded] = useState(!collapsed);
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -79,31 +80,59 @@ export function JsonViewer({
     };
   }
 
+  const copyToClipboard = async () => {
+    try {
+      const jsonString = JSON.stringify(jsonData, null, 2);
+      await navigator.clipboard.writeText(jsonString);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card">
-      {title && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-4 py-2 bg-muted hover:bg-accent flex items-center justify-between text-left"
-        >
-          <span className="font-medium text-sm">{title}</span>
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
-        </button>
+    <div className="border border-border rounded-lg overflow-hidden bg-card relative">
+      {(title || data) && (
+        <div className="px-4 py-2 ">
+          {title ? (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-2 text-left w-full"
+            >
+              <span className="font-medium text-sm">{title}</span>
+              {isExpanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+          ) : null}
+        </div>
       )}
+      {/* Button copy absolute ở góc trên bên phải */}
+      <button
+        onClick={copyToClipboard}
+        className="absolute top-2 right-4 p-1.5 hover:bg-accent rounded transition-colors bg-card/80 backdrop-blur-sm z-10"
+        title="Copy JSON"
+      >
+        {copied ? (
+          <Check className="w-4 h-4 text-green-500" />
+        ) : (
+          <Copy className="w-4 h-4" />
+        )}
+      </button>
       {isExpanded && (
-        <div className="p-4 overflow-auto max-h-96">
+        <div className="p-4 overflow-auto max-h-96 relative">
           {mounted ? (
             <ReactJsonViewClient
               src={jsonData}
+              name={false}
               theme={isDark ? "monokai" : "rjv-default"}
-              collapsed={1}
+              collapsed={false}
               displayDataTypes={false}
               displayObjectSize={false}
-              enableClipboard={true}
+              enableClipboard={false}
               style={{
                 backgroundColor: "transparent",
               }}

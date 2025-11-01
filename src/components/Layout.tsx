@@ -18,12 +18,10 @@ export function Layout({ children }: LayoutProps) {
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">Demo API Viewer</h1>
-            {apiInfo && (
-              <p className="text-xs text-muted-foreground">
-                {apiInfo.title} - v{apiInfo.version}
-              </p>
-            )}
+            <h1 className="text-xl font-bold">API Documentation</h1>
+            <p className="text-xs text-muted-foreground">
+              SOFIPOS API - v1.0.0
+            </p>
           </div>
           <div className="flex items-center gap-4">
             {!isLoading && !error && (
@@ -31,7 +29,7 @@ export function Layout({ children }: LayoutProps) {
                 <SearchBar
                   value=""
                   onChange={() => {}}
-                  placeholder="Tìm kiếm toàn cục..."
+                  placeholder="Tìm kiếm..."
                 />
               </div>
             )}
@@ -58,7 +56,8 @@ export function Layout({ children }: LayoutProps) {
             <div className="text-center">
               <p className="text-red-500 text-lg mb-2">Lỗi: {error}</p>
               <p className="text-muted-foreground text-sm">
-                Vui lòng kiểm tra file demo-api.json trong thư mục public
+                Không thể tải API từ server. Vui lòng kiểm tra kết nối mạng hoặc
+                thử lại sau.
               </p>
             </div>
           </div>
