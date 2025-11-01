@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { useApi } from "@/context/ApiContext";
 import { ThemeToggle } from "./ThemeToggle";
 import { SearchBar } from "./SearchBar";
+import { ExportMenu } from "./ExportMenu";
 
 interface LayoutProps {
   children: ReactNode;
@@ -25,13 +26,16 @@ export function Layout({ children }: LayoutProps) {
           </div>
           <div className="flex items-center gap-4">
             {!isLoading && !error && (
-              <div className="hidden md:block w-64">
-                <SearchBar
-                  value=""
-                  onChange={() => {}}
-                  placeholder="Tìm kiếm..."
-                />
-              </div>
+              <>
+                <div className="hidden md:block w-64">
+                  <SearchBar
+                    value=""
+                    onChange={() => {}}
+                    placeholder="Tìm kiếm..."
+                  />
+                </div>
+                <ExportMenu />
+              </>
             )}
             <ThemeToggle />
           </div>

@@ -4,6 +4,7 @@ import { ApiProvider } from "@/context/ApiContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import "@/styles/globals.css";
+import "@/styles/print.css";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (

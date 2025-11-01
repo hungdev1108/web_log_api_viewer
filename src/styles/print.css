@@ -1,0 +1,146 @@
+/* Print stylesheet cho print-friendly view */
+
+@media print {
+  /* Ẩn các phần tử không cần thiết khi in */
+  header,
+  .hidden,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Hiển thị nội dung chính */
+  .print-content {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Layout cho print */
+  body {
+    margin: 0;
+    padding: 20px;
+    font-size: 12pt;
+    line-height: 1.6;
+    color: #000;
+    background: #fff;
+  }
+
+  /* Sidebar cho print - chuyển thành danh sách */
+  aside {
+    display: block !important;
+    width: 100% !important;
+    border: none !important;
+    page-break-inside: avoid;
+  }
+
+  /* Endpoint cards */
+  .endpoint-card {
+    page-break-inside: avoid;
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  /* Endpoint detail */
+  .endpoint-detail {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    page-break-inside: avoid;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+  }
+
+  /* Code blocks */
+  pre,
+  code {
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    background-color: #f5f5f5;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    overflow: visible;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: 18pt;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+  }
+
+  h2 {
+    font-size: 16pt;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 14pt;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+
+  /* Links */
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  /* Method badges */
+  .method-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 10pt;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Page breaks */
+  .page-break {
+    page-break-before: always;
+  }
+
+  /* Avoid page breaks */
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  /* Group headers */
+  .group-header {
+    page-break-after: avoid;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    font-weight: bold;
+    border-bottom: 2px solid #333;
+  }
+}
