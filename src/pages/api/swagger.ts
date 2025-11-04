@@ -10,7 +10,7 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      "http://192.168.1.30:12702/swagger/v1/swagger.json"
+      "https://demo-api.v-hoadon.com/swagger/v1/swagger.json"
     );
 
     if (!response.ok) {
