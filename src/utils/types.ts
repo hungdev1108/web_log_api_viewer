@@ -20,6 +20,10 @@ export interface OpenAPISpec {
       email?: string;
     };
   };
+  servers?: Array<{
+    url: string;
+    description?: string;
+  }>;
   paths: Record<string, PathItem>;
   components?: {
     schemas?: Record<string, any>;

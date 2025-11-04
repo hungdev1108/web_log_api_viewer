@@ -5,6 +5,7 @@ import { useApi } from "@/context/ApiContext";
 import { ThemeToggle } from "./ThemeToggle";
 import { SearchBar } from "./SearchBar";
 import { ExportMenu } from "./ExportMenu";
+import { AuthManager } from "./AuthManager";
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,9 +20,9 @@ export function Layout({ children }: LayoutProps) {
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">API Documentation</h1>
+            <h1 className="text-xl font-bold">{apiInfo?.title}</h1>
             <p className="text-xs text-muted-foreground">
-              SOFIPOS API - v1.0.0
+              {apiInfo?.description} - {apiInfo?.version}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -35,6 +36,9 @@ export function Layout({ children }: LayoutProps) {
                   />
                 </div>
                 <ExportMenu />
+                <div className="relative">
+                  <AuthManager />
+                </div>
               </>
             )}
             <ThemeToggle />

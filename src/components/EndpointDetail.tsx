@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Share2 } from "lucide-react";
 import { useApi } from "@/context/ApiContext";
 import {
   getMethodBackgroundColor,
   getMethodTextColor,
 } from "@/utils/methodColor";
 import { JsonViewer } from "./JsonViewer";
+import { ApiTester } from "./ApiTester";
 import type { ApiEndpoint } from "@/utils/types";
+import { createShareableUrl } from "@/utils/urlUtils";
 
 // Component RequestBodySection với tabs
 function RequestBodySection({
@@ -325,6 +327,7 @@ function generateExampleFromSchema(schema: any, openApiSpec: any): any {
 export function EndpointDetail() {
   const { selectedEndpoint, apiInfo, openApiSpec } = useApi();
   const [copied, setCopied] = useState(false);
+  const [shareLink, setShareLink] = useState<string | null>(null);
 
   if (!selectedEndpoint) {
     return (
@@ -345,6 +348,15 @@ export function EndpointDetail() {
     } catch (err) {
       console.error("Failed to copy:", err);
     }
+  };
+
+  const handleShare = async () => {
+    if (!selectedEndpoint) return;
+
+    // Tạo shareable URL (chỉ với endpoint, không có params)
+    const url = createShareableUrl(selectedEndpoint.id);
+    await copyToClipboard(url);
+    setShareLink(url);
   };
 
   const getParameterType = (param: any) => {
@@ -429,6 +441,13 @@ export function EndpointDetail() {
               <Copy className="w-5 h-5" />
             )}
           </button>
+          <button
+            onClick={handleShare}
+            className="p-2 hover:bg-muted rounded transition-colors"
+            title="Share link"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
         </div>
 
         {selectedEndpoint.summary && (
@@ -441,6 +460,9 @@ export function EndpointDetail() {
           </p>
         )}
       </div>
+
+      {/* API Tester */}
+      <ApiTester endpoint={selectedEndpoint} openApiSpec={openApiSpec} />
 
       {/* Parameters */}
       {selectedEndpoint.parameters &&
