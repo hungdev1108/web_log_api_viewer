@@ -10,8 +10,8 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      // "https://demo-api.v-hoadon.com/swagger/v1/swagger.json"
-      "http://192.168.1.30:15000/swagger/v1/swagger.json"
+      "https://demo-api.v-hoadon.com/swagger/v1/swagger.json"
+      // "http://192.168.1.30:15000/swagger/v1/swagger.json"
     );
 
     if (!response.ok) {

@@ -98,7 +98,7 @@ export function ApiTester({ endpoint, openApiSpec }: ApiTesterProps) {
       setBaseUrl(openApiSpec.servers[0].url);
     } else {
       // Fallback: lấy từ swagger.ts hoặc sử dụng origin
-      const defaultBaseUrl = "https://demo-api.v-hoadon.com";
+      const defaultBaseUrl = "https://demo-master-app.v-hoadon.com";
       setBaseUrl(defaultBaseUrl);
     }
   }, [openApiSpec]);
